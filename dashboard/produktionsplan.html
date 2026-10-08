@@ -1,0 +1,983 @@
+<title>DogsTV Produktionsplan</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700&family=Poppins:wght@600;700&display=swap">
+<style>
+/* Layout: brand header bar, then a two-column workbench (upload queue left, the video's production steps right); stacks to one column on phones. */
+:root {
+  --bg: #f2f5ec;
+  --surface: #ffffff;
+  --surface-2: #e8eedf;
+  --ink: #22261c;
+  --muted: #5b6452;
+  --line: #d3dbc8;
+  --brand: #64d30a;
+  --brand-ink: #14180f;
+  --accent-text: #387305;
+  --header-bg: #14180f;
+  --header-ink: #eef4e6;
+  --header-muted: #9fb08e;
+  --warn: #9a5b00;
+  --warn-bg: #fbefd9;
+  --crit: #b43a0e;
+  --crit-bg: #fbe3d9;
+  --ok-bg: #e2f3d2;
+  --focus: #2f6fd6;
+  --font-display: "Poppins", "Montserrat", "Trebuchet MS", Arial, sans-serif;
+  --font-body: "Montserrat", "Trebuchet MS", Arial, Helvetica, sans-serif;
+  --font-mono: ui-monospace, "SFMono-Regular", Menlo, Consolas, monospace;
+  --radius: 10px;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #10130c; --surface: #181d13; --surface-2: #20271a; --ink: #e6ecdc; --muted: #9ba78f;
+    --line: #2e3725; --accent-text: #8fe03f; --header-bg: #0b0e08; --header-ink: #eef4e6; --header-muted: #8c9c7c;
+    --warn: #f0b54f; --warn-bg: #3a2c10; --crit: #ff9a73; --crit-bg: #3d1d10; --ok-bg: #1f3312; --focus: #7aa7ff;
+    color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #10130c; --surface: #181d13; --surface-2: #20271a; --ink: #e6ecdc; --muted: #9ba78f;
+  --line: #2e3725; --accent-text: #8fe03f; --header-bg: #0b0e08; --header-ink: #eef4e6; --header-muted: #8c9c7c;
+  --warn: #f0b54f; --warn-bg: #3a2c10; --crit: #ff9a73; --crit-bg: #3d1d10; --ok-bg: #1f3312; --focus: #7aa7ff;
+  color-scheme: dark;
+}
+* { box-sizing: border-box; }
+body { background: var(--bg); color: var(--ink); font-family: var(--font-body); font-size: 15px; line-height: 1.55; }
+h1, h2, h3 { font-family: var(--font-display); text-wrap: balance; margin: 0; line-height: 1.2; }
+button, input, textarea, select { font: inherit; color: inherit; }
+:focus-visible { outline: 2px solid var(--focus); outline-offset: 2px; }
+.tnum { font-variant-numeric: tabular-nums; }
+
+/* Header */
+.topbar { background: var(--header-bg); color: var(--header-ink); border-bottom: 3px solid var(--brand); position: sticky; top: env(safe-area-inset-top, 0px); z-index: 5; }
+.topbar-in { max-width: 1320px; margin: 0 auto; padding: 12px 16px; display: flex; flex-wrap: wrap; align-items: center; gap: 12px 20px; }
+.logo { font-family: var(--font-display); font-weight: 700; font-size: 19px; letter-spacing: .01em; white-space: nowrap; }
+.logo b { color: var(--brand); font-weight: 700; }
+.logo small { display: block; font-family: var(--font-body); font-weight: 500; font-size: 11px; letter-spacing: .14em; text-transform: uppercase; color: var(--header-muted); }
+.tabs { display: flex; flex-wrap: wrap; gap: 6px; margin-left: auto; }
+.tab { background: transparent; border: 1px solid #3a4630; color: var(--header-ink); padding: 7px 14px; border-radius: 999px; cursor: pointer; font-weight: 600; font-size: 13px; }
+.tab:hover { border-color: var(--brand); }
+.tab[aria-pressed="true"] { background: var(--brand); color: var(--brand-ink); border-color: var(--brand); }
+.tab.ghost { border-style: dashed; color: var(--header-muted); }
+
+/* Workbench */
+.wrap { max-width: 1320px; margin: 0 auto; padding-inline: 16px; padding-block: 20px 48px; }
+.bench { display: grid; grid-template-columns: minmax(0, 340px) minmax(0, 1fr); gap: 24px; align-items: start; }
+@media (max-width: 900px) { .bench { grid-template-columns: minmax(0, 1fr); } }
+.banner { border-radius: var(--radius); padding: 12px 14px; margin-bottom: 16px; background: var(--warn-bg); color: var(--ink); border: 1px solid var(--line); }
+.banner strong { color: var(--warn); }
+
+.panel { background: var(--surface); border: 1px solid var(--line); border-radius: var(--radius); }
+.eyebrow { font-size: 11px; letter-spacing: .14em; text-transform: uppercase; font-weight: 600; color: var(--muted); margin: 0 0 8px; }
+
+/* New video form */
+.newform { padding: 16px; display: grid; gap: 10px; }
+.newform h2 { font-size: 16px; }
+label.f { display: grid; gap: 4px; font-size: 12px; font-weight: 600; color: var(--muted); min-width: 0; }
+input.in, textarea.in, select.in { width: 100%; background: var(--bg); border: 1px solid var(--line); border-radius: 8px; padding: 9px 11px; font-size: 14px; font-weight: 500; color: var(--ink); min-width: 0; }
+textarea.in { resize: vertical; min-height: 70px; line-height: 1.5; }
+input.in:focus, textarea.in:focus { border-color: var(--accent-text); outline: none; box-shadow: 0 0 0 3px color-mix(in srgb, var(--brand) 30%, transparent); }
+.row { display: flex; flex-wrap: wrap; gap: 10px; align-items: end; }
+.row > * { flex: 1 1 160px; }
+
+.btn { display: inline-flex; align-items: center; justify-content: center; gap: 6px; border-radius: 8px; padding: 9px 14px; font-weight: 600; font-size: 13.5px; cursor: pointer; border: 1px solid var(--line); background: var(--surface); color: var(--ink); white-space: nowrap; }
+.btn:hover { border-color: var(--accent-text); }
+.btn:disabled { opacity: .5; cursor: not-allowed; }
+.btn.primary { background: var(--brand); border-color: var(--brand); color: var(--brand-ink); }
+.btn.primary:hover { filter: brightness(1.06); }
+.btn.dark { background: var(--header-bg); border-color: var(--header-bg); color: var(--header-ink); }
+.btn.quiet { background: transparent; border-color: transparent; color: var(--muted); padding-inline: 8px; }
+.btn.quiet:hover { color: var(--ink); border-color: var(--line); }
+.btn.danger { color: var(--crit); }
+.btn.danger.armed { background: var(--crit); border-color: var(--crit); color: #fff; }
+
+/* Queue */
+.queue { display: grid; gap: 8px; margin-top: 16px; }
+.qhead { display: flex; justify-content: space-between; align-items: baseline; margin: 18px 2px 4px; }
+.qhead h2 { font-size: 15px; }
+.qhead span { font-size: 12px; color: var(--muted); }
+.vcard { display: grid; grid-template-columns: 56px minmax(0, 1fr); gap: 12px; align-items: start; text-align: left; width: 100%; padding: 12px; border-radius: var(--radius); background: var(--surface); border: 1px solid var(--line); cursor: pointer; }
+.vcard:hover { border-color: var(--accent-text); }
+.vcard[aria-current="true"] { border-color: var(--brand); box-shadow: inset 4px 0 0 var(--brand); }
+.date { border-radius: 8px; background: var(--header-bg); color: var(--header-ink); text-align: center; padding: 6px 0 7px; line-height: 1.1; }
+.date b { display: block; font-family: var(--font-display); font-size: 20px; }
+.date span { font-size: 10px; letter-spacing: .12em; text-transform: uppercase; color: var(--header-muted); font-weight: 600; }
+.vcard .vt { display: block; font-size: 14px; font-weight: 600; line-height: 1.3; overflow-wrap: anywhere; }
+.vcard .vmeta { display: block; }
+.vmeta { font-size: 12px; color: var(--muted); margin-top: 2px; }
+.prog { display: flex; gap: 3px; margin-top: 8px; }
+.prog i { flex: 1; height: 5px; border-radius: 3px; background: var(--surface-2); }
+.prog i.on { background: var(--brand); }
+.empty { padding: 18px; border: 1px dashed var(--line); border-radius: var(--radius); color: var(--muted); font-size: 13.5px; }
+details.past summary { cursor: pointer; font-size: 13px; color: var(--muted); font-weight: 600; padding: 6px 2px; }
+
+/* Video detail */
+.vhead { padding: 18px 20px; display: grid; gap: 14px; }
+.vhead-top { display: flex; flex-wrap: wrap; gap: 10px 16px; align-items: center; justify-content: space-between; }
+.countdown { display: inline-flex; gap: 8px; align-items: center; font-size: 13px; font-weight: 600; }
+.chip { display: inline-flex; align-items: center; gap: 5px; padding: 3px 10px; border-radius: 999px; font-size: 12px; font-weight: 600; background: var(--surface-2); color: var(--ink); border: 1px solid transparent; white-space: nowrap; }
+.chip.ok { background: var(--ok-bg); color: var(--accent-text); }
+.chip.warn { background: var(--warn-bg); color: var(--warn); }
+.chip.crit { background: var(--crit-bg); color: var(--crit); }
+.chip.brand { background: var(--brand); color: var(--brand-ink); }
+.thema-in { font-family: var(--font-display); font-size: 22px; font-weight: 700; border: 1px solid transparent; background: transparent; padding: 4px 8px; margin-left: -8px; border-radius: 8px; width: 100%; color: var(--ink); }
+.thema-in:hover { border-color: var(--line); }
+.thema-in:focus { border-color: var(--accent-text); outline: none; background: var(--bg); }
+.grid2 { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 12px; }
+.slots { display: flex; flex-wrap: wrap; gap: 6px; font-size: 12px; color: var(--muted); }
+
+.steps { display: grid; gap: 10px; margin-top: 16px; }
+.step { background: var(--surface); border: 1px solid var(--line); border-radius: var(--radius); overflow: hidden; }
+.step[data-state="done"] { border-left: 4px solid var(--brand); }
+.step[data-state="running"] { border-left: 4px solid var(--warn); }
+.step-head { display: grid; grid-template-columns: 38px minmax(0, 1fr) auto; gap: 12px; align-items: center; width: 100%; padding: 12px 16px; background: transparent; border: 0; text-align: left; cursor: pointer; }
+.step-head:hover { background: var(--surface-2); }
+.step-no { font-family: var(--font-display); font-weight: 700; font-size: 15px; color: var(--muted); font-variant-numeric: tabular-nums; }
+.step[data-state="done"] .step-no { color: var(--accent-text); }
+.step-head .st { display: block; font-family: var(--font-display); font-weight: 700; font-size: 15px; line-height: 1.25; }
+.step-head .cmd { display: block; }
+.cmd { font-size: 12px; color: var(--muted); margin: 1px 0 0; }
+.step-body { padding: 4px 16px 18px 66px; display: grid; gap: 12px; }
+@media (max-width: 600px) { .step-body { padding-left: 16px; } }
+.hint { font-size: 13px; color: var(--muted); margin: 0; max-width: 70ch; }
+.uses { display: flex; flex-wrap: wrap; gap: 6px; align-items: center; font-size: 12px; color: var(--muted); }
+.actions { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
+.status { font-size: 13px; color: var(--muted); }
+.status.err { color: var(--crit); font-weight: 600; }
+.out { width: 100%; min-height: 140px; max-height: 70vh; font-family: var(--font-body); font-size: 14px; line-height: 1.6; background: var(--bg); border: 1px solid var(--line); border-radius: 8px; padding: 12px 14px; resize: vertical; color: var(--ink); }
+.out.code { font-family: var(--font-mono); font-size: 12.5px; }
+.out[readonly] { border-style: dashed; }
+.check { display: flex; flex-wrap: wrap; gap: 6px; align-items: center; }
+.check .lbl { font-size: 12px; font-weight: 600; color: var(--muted); margin-right: 2px; }
+.check button.chip { cursor: pointer; }
+.finds { font-size: 12.5px; background: var(--surface-2); border-radius: 8px; padding: 10px 12px; display: grid; gap: 4px; }
+.finds mark { background: var(--crit-bg); color: var(--crit); border-radius: 3px; padding: 0 2px; }
+.revise { display: flex; gap: 8px; flex-wrap: wrap; }
+.revise input { flex: 1 1 240px; }
+.preview { width: 100%; height: 640px; max-width: 100%; border: 1px solid var(--line); border-radius: 8px; background: #ffffff; }
+.subnote { font-size: 12px; color: var(--muted); }
+
+/* Knowledge base */
+.kb { display: grid; gap: 20px; }
+.kb-grid { display: grid; grid-template-columns: minmax(0, 1.2fr) minmax(0, 1fr); gap: 20px; align-items: start; }
+@media (max-width: 980px) { .kb-grid { grid-template-columns: minmax(0, 1fr); } }
+.kb section.panel { padding: 18px; display: grid; gap: 12px; }
+.kb h2 { font-size: 17px; }
+.witem { border: 1px solid var(--line); border-radius: var(--radius); padding: 14px; display: grid; gap: 10px; background: var(--bg); }
+.witem-top { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; justify-content: space-between; }
+.seg { display: inline-flex; border: 1px solid var(--line); border-radius: 8px; overflow: hidden; }
+.seg button { border: 0; background: transparent; padding: 6px 10px; font-size: 12.5px; font-weight: 600; cursor: pointer; color: var(--muted); }
+.seg button[aria-pressed="true"] { background: var(--header-bg); color: var(--header-ink); }
+.pick { display: flex; flex-wrap: wrap; gap: 6px; }
+.pick label { display: inline-flex; align-items: center; gap: 5px; font-size: 12px; font-weight: 600; padding: 4px 9px; border-radius: 999px; background: var(--surface); border: 1px solid var(--line); cursor: pointer; }
+.pick input { accent-color: var(--brand); margin: 0; }
+.expect { display: grid; gap: 6px; font-size: 13px; }
+.expect div { display: flex; gap: 8px; align-items: center; }
+.ann { min-height: 360px; font-size: 13px; }
+@media (prefers-reduced-motion: no-preference) {
+  .pulse { animation: pulse 1.4s ease-in-out infinite; }
+  @keyframes pulse { 50% { opacity: .45; } }
+}
+</style>
+
+<header class="topbar">
+  <div class="topbar-in">
+    <div class="logo">DOG<b>s</b>TV Produktion<small>Videos planen, Schritte auslösen</small></div>
+    <nav class="tabs" id="tabs" aria-label="Kanal und Bereich"></nav>
+  </div>
+</header>
+<main class="wrap" id="app">
+  <div class="empty">Dein Produktionsplan lädt. Hier erscheinen gleich deine geplanten Videos mit allen Arbeitsschritten.</div>
+</main>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+<script>
+(() => {
+"use strict";
+
+/* ---------- capabilities ---------- */
+const C = window.claude;
+const dbP = C ? C.use("db").catch(() => null) : Promise.resolve(null);
+const sampleP = C ? C.use("sample").catch(() => null) : Promise.resolve(null);
+const mcpP = C ? C.use("mcp").catch(() => null) : Promise.resolve(null);
+const dlP = C ? C.use("downloads").catch(() => null) : Promise.resolve(null);
+const DRIVE = "Google Drive";
+
+/* ---------- state ---------- */
+const S = {
+  db: null, dbReady: false, dbMissing: false, sampleMissing: false,
+  kanaele: {}, wissen: [], videos: {},
+  kanalId: null, view: "videos", videoId: null,
+  open: {}, running: {}, status: {}, finds: {}, preview: {}, drafts: {}, armed: {},
+  unsubWissen: null,
+};
+try { const k = localStorage.getItem("dp.kanal"); if (k) S.kanalId = k; } catch (e) {}
+
+/* ---------- helpers ---------- */
+const esc = (s) => String(s ?? "").replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
+const pad = (n) => String(n).padStart(2, "0");
+const parseLocal = (s) => { const m = /^(\d{4})-(\d{2})-(\d{2})(?:T(\d{2}):(\d{2}))?/.exec(s || ""); return m ? new Date(+m[1], +m[2] - 1, +m[3], +(m[4] || 0), +(m[5] || 0)) : null; };
+const toLocalInput = (d) => `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}`;
+const dayKey = (d) => `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`;
+const fmtLong = (d) => d ? d.toLocaleDateString("de-DE", { weekday: "long", day: "numeric", month: "long", year: "numeric" }) : "ohne Termin";
+const fmtShort = (d) => d ? d.toLocaleDateString("de-DE", { weekday: "short", day: "numeric", month: "short" }) : "";
+const fmtTime = (d) => d ? `${pad(d.getHours())}:${pad(d.getMinutes())} Uhr` : "";
+const addDays = (d, n) => { const x = new Date(d); x.setDate(x.getDate() + n); return x; };
+const words = (t) => (String(t || "").match(/[\p{L}\p{N}][\p{L}\p{N}'’-]*/gu) || []).length;
+const bytes = (t) => new TextEncoder().encode(t).length;
+const uid = () => Date.now().toString(36) + Math.random().toString(36).slice(2, 8);
+function daysUntil(d) {
+  if (!d) return null;
+  const a = new Date(); a.setHours(0, 0, 0, 0);
+  const b = new Date(d); b.setHours(0, 0, 0, 0);
+  return Math.round((b - a) / 86400000);
+}
+function countdownText(n) {
+  if (n === null) return "";
+  if (n === 0) return "heute";
+  if (n === 1) return "morgen";
+  if (n > 1) return `in ${n} Tagen`;
+  if (n === -1) return "seit gestern online";
+  return `seit ${-n} Tagen online`;
+}
+function weekdayDates(termin) {
+  const d = parseLocal(termin); if (!d) return null;
+  const dow = (d.getDay() + 6) % 7; // Montag = 0
+  const mo = addDays(d, -dow);
+  return { montag: mo, mittwoch: addDays(mo, 2), freitag: addDays(mo, 4), termin: d };
+}
+const kanal = () => S.kanaele[S.kanalId] || null;
+const steps = () => (kanal() && Array.isArray(kanal().schritte) ? kanal().schritte : []);
+const videosOf = (kid) => Object.entries(S.videos).filter(([, v]) => v.kanal === kid)
+  .sort((a, b) => String(a[1].termin || "9999").localeCompare(String(b[1].termin || "9999")));
+const res = (v, key) => (v && v.ergebnisse && v.ergebnisse[key]) || {};
+
+/* ---------- debounced writes, one at a time per doc ---------- */
+const queues = {};
+function deepMerge(a, b) { for (const k in b) { if (b[k] && typeof b[k] === "object" && !Array.isArray(b[k]) && a[k] && typeof a[k] === "object") deepMerge(a[k], b[k]); else a[k] = b[k]; } return a; }
+function queueWrite(path, patch, delay = 700) {
+  const q = queues[path] || (queues[path] = { patch: {}, timer: null, chain: Promise.resolve() });
+  deepMerge(q.patch, patch);
+  clearTimeout(q.timer);
+  q.timer = setTimeout(() => flush(path), delay);
+}
+function flush(path) {
+  const q = queues[path]; if (!q || !S.db) return Promise.resolve();
+  clearTimeout(q.timer);
+  const patch = q.patch; q.patch = {};
+  if (!Object.keys(patch).length) return q.chain;
+  q.chain = q.chain.then(() => S.db.doc(path).update(patch)).catch((e) => { console.warn("write", path, e); toast("Speichern hat nicht geklappt. Bitte lade die Seite neu und versuche es noch einmal."); });
+  return q.chain;
+}
+function setDraft(key, val) { S.drafts[key] = val; }
+function draftOr(key, val) { return Object.prototype.hasOwnProperty.call(S.drafts, key) ? S.drafts[key] : val; }
+
+let toastTimer;
+function toast(msg) {
+  let t = document.getElementById("toast");
+  if (!t) { t = document.createElement("div"); t.id = "toast"; t.setAttribute("role", "status");
+    t.style.cssText = "position:fixed;left:50%;transform:translateX(-50%);bottom:calc(18px + env(safe-area-inset-bottom,0px));background:var(--header-bg);color:var(--header-ink);padding:10px 16px;border-radius:10px;font-size:13.5px;font-weight:600;z-index:20;max-width:calc(100% - 32px);box-shadow:0 6px 24px rgba(0,0,0,.25)";
+    document.body.appendChild(t); }
+  t.textContent = msg; t.hidden = false;
+  clearTimeout(toastTimer); toastTimer = setTimeout(() => { t.hidden = true; }, 3200);
+}
+
+/* ---------- style check (harte Stilregeln) ---------- */
+function plainForCheck(text, ausgabe) {
+  let t = String(text || "");
+  if (ausgabe === "newsletter") {
+    const html = extractFence(t, "html") || t;
+    try { const doc = new DOMParser().parseFromString(html, "text/html"); t = doc.body.textContent || ""; } catch (e) { t = html.replace(/<[^>]+>/g, " "); }
+  }
+  return t.split("\n").filter((l) => !/^\s*(-{3,}|```)/.test(l)).map((l) => l.replace(/^\s*[-*]\s+/, "").replace(/^\s*>\s?/, "")).join("\n");
+}
+function styleCheck(text, ausgabe) {
+  const k = kanal();
+  const t = plainForCheck(text, ausgabe);
+  const ctx = (i, len) => { const a = Math.max(0, i - 40), b = Math.min(t.length, i + len + 40); return { pre: t.slice(a, i), hit: t.slice(i, i + len), post: t.slice(i + len, b) }; };
+  const scan = (re) => { const out = []; let m; re.lastIndex = 0; while ((m = re.exec(t)) && out.length < 50) { const off = m.index + (m[1] ? m[1].length : 0); out.push(ctx(off, m[0].length - (m[1] ? m[1].length : 0))); if (!re.global) break; } return out; };
+  const rules = [
+    { id: "ausruf", label: "Ausrufezeichen", hits: scan(/!/g) },
+    { id: "strich", label: "Gedankenstriche", hits: scan(/[–—]|(?<=\S) - (?=\S)/g) },
+    { id: "nicht", label: "Satzanfang „Nicht“", hits: scan(/(^|[.?!:]\s+|\n\s*)Nicht\b/g) },
+    { id: "sondern", label: "„nicht X, sondern Y“", hits: scan(/\b(?:nicht|kein(?:e|en|er|em|es)?)\b[^.?!\n]{0,120}?\bsondern\b/gi) },
+  ];
+  const verboten = String((k && k.verboteneWoerter) || "").split(/[,\n;]/).map((w) => w.trim()).filter(Boolean);
+  if (verboten.length) {
+    const re = new RegExp("(?<![\\p{L}])(?:" + verboten.map((w) => w.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")).join("|") + ")(?![\\p{L}])", "giu");
+    rules.push({ id: "wort", label: "Verbotene Wörter", hits: scan(re) });
+  }
+  return rules;
+}
+
+/* ---------- fences & parsing ---------- */
+function extractFence(text, lang) {
+  const re = lang ? new RegExp("```" + lang + "\\s*\\n([\\s\\S]*?)```", "i") : /```[a-zA-Z]*\s*\n([\s\S]*?)```/;
+  const m = re.exec(String(text || ""));
+  return m ? m[1].replace(/\s+$/, "") : null;
+}
+function paketBody(text) {
+  const p = extractFence(text) || "";
+  const i = p.indexOf("\n---\n");
+  return i >= 0 ? p.slice(i + 5) : "";
+}
+function empfehlung(text) {
+  const m = /^\s*\**EMPFEHLUNG\**\s*:\s*\**(.+?)\**\s*$/im.exec(String(text || ""));
+  return m ? m[1].replace(/^["„“]|["“”]$/g, "").trim() : null;
+}
+
+/* ---------- Google Drive ---------- */
+function driveId(s) {
+  s = String(s || "").trim();
+  let m = /\/d\/([A-Za-z0-9_-]{20,})/.exec(s) || /[?&]id=([A-Za-z0-9_-]{20,})/.exec(s);
+  if (m) return m[1];
+  return /^[A-Za-z0-9_-]{20,}$/.test(s) ? s : null;
+}
+const MCP_MSG = {
+  server_not_connected: "Google Drive ist in deinem Claude-Konto nicht verbunden. Füge es unter claude.ai, Einstellungen, Konnektoren hinzu.",
+  needs_reauth: "Die Google-Drive-Verbindung ist abgelaufen. Verbinde Google Drive unter claude.ai, Einstellungen, Konnektoren neu.",
+  selection_required: "Du hast mehrere Google-Drive-Verbindungen. Wähle in der Abfrage von Claude aus, welche das Dashboard nutzen soll.",
+  not_in_manifest: "Du hast dem Dashboard den Zugriff auf Google Drive nicht erlaubt. Du kannst das im Menü des Artifacts unter Berechtigungen ändern.",
+  blocked_by_policy: "Google Drive ist für dieses Konto gesperrt.",
+  tool_error: "Google Drive konnte die Datei nicht lesen. Stimmt der Link, und hast du Zugriff auf das Dokument?",
+  server_unavailable: "Google Drive antwortet gerade nicht. Versuch es in einer Minute noch einmal.",
+  no_mcp: "Google Drive ist in dieser Ansicht nicht erreichbar. Öffne das Dashboard direkt auf claude.ai.",
+};
+async function readDrive(fileId, fresh) {
+  const mcp = await mcpP;
+  if (!mcp) throw { code: "no_mcp" };
+  const r = await mcp.callTool(DRIVE, "read_file_content", { fileId }, { cache: fresh ? { staleTime: 0, refresh: true } : { staleTime: 120000 } });
+  const p = r.payload;
+  if (typeof p === "string") return { text: p, title: "" };
+  if (p && typeof p === "object") return { text: String(p.fileContent ?? p.content ?? p.text ?? ""), title: String(p.title || "") };
+  const tb = (r.content || []).find((c) => c.type === "text");
+  return { text: tb ? tb.text : "", title: "" };
+}
+
+/* ---------- prompt building ---------- */
+function stepByKey(key) { return steps().find((s) => s.key === key); }
+function fill(tpl, v) {
+  const w = weekdayDates(v.termin);
+  const map = w ? { montag: fmtLong(w.montag), mittwoch: fmtLong(w.mittwoch), freitag: fmtLong(w.freitag), termin: `${fmtLong(w.termin)}, ${fmtTime(w.termin)}` } : {};
+  return String(tpl || "").replace(/\{\{(\w+)\}\}/g, (_, k) => map[k] || "[Termin fehlt]");
+}
+function wissenFor(stepKey) {
+  return S.wissen.filter((w) => !w.aus && (!Array.isArray(w.schritte) || !w.schritte.length || w.schritte.includes(stepKey)));
+}
+async function buildPrompt(v, step) {
+  const k = kanal();
+  const parts = [];
+  parts.push(`Du arbeitest als Produktionsassistenz für den YouTube-Kanal ${k.name}. Diese Anfrage kommt aus Ines' Produktions-Dashboard. Du hast kein Gedächtnis aus früheren Chats, alles Nötige steht in dieser Nachricht. In diesem Dashboard kannst du keine Rückfragen stellen, nicht im Internet suchen und keine Dateien anlegen. Liefere den Inhalt deshalb direkt als Text. Fehlt dir eine Angabe, setze an der Stelle einen klar erkennbaren Platzhalter in eckigen Klammern und nenne die Lücke ganz am Ende unter der Überschrift „Hinweise für Ines“.`);
+  parts.push(`<projektanweisung>\n${k.anweisung || ""}\n</projektanweisung>`);
+  const items = wissenFor(step.key);
+  if (items.length) {
+    const docs = [];
+    for (const w of items) {
+      let text = w.text || "";
+      if (w.quelle === "drive") {
+        if (!w.fileId) throw { code: "drive_link", message: `Bei „${w.titel || "Wissensdatei"}“ fehlt ein gültiger Google-Drive-Link.` };
+        try { text = (await readDrive(w.fileId)).text; }
+        catch (e) { throw { code: "drive", message: `„${w.titel || "Wissensdatei"}“ ließ sich nicht aus Google Drive laden. ${MCP_MSG[e.code] || (e.message || "")}` }; }
+      }
+      docs.push(`<datei name="${(w.titel || "Ohne Titel").replace(/"/g, "'")}">\n${text}\n</datei>`);
+    }
+    parts.push(`<projektwissen>\n${docs.join("\n")}\n</projektwissen>`);
+  }
+  const d = parseLocal(v.termin);
+  const vid = [
+    `Thema: ${v.thema || "[Thema fehlt]"}`,
+    `Veröffentlichung: ${d ? fmtLong(d) + ", " + fmtTime(d) : "[Termin fehlt]"}`,
+    `Gewählter Titel: ${v.titelGewaehlt || "noch keiner gewählt"}`,
+    `Sponsor oder Werbung: ${v.sponsor || "keine"}`,
+  ];
+  if (v.notizen) vid.push(`Notizen von Ines:\n${v.notizen}`);
+  parts.push(`<video>\n${vid.join("\n")}\n</video>`);
+  const kon = (step.kontext || []).map((key) => [stepByKey(key), res(v, key).text]).filter(([s, t]) => s && t);
+  if (kon.length) parts.push(`<bisherige_ergebnisse>\n${kon.map(([s, t]) => `<ergebnis schritt="${s.label}">\n${t}\n</ergebnis>`).join("\n")}\n</bisherige_ergebnisse>`);
+  const felder = (step.felder || []).map((f) => {
+    const val = draftOr(`${S.videoId}.${step.key}.${f.key}`, (res(v, step.key).felder || {})[f.key]);
+    if (f.typ === "check") return `- ${f.label}: ${val ? "ja" : "nein"}`;
+    return `- ${f.label}: ${val && String(val).trim() ? (String(val).includes("\n") ? "\n" + val : val) : "noch nicht vorhanden"}`;
+  });
+  let auftrag = `Auftrag: Ich schreibe „${step.befehl}“. Führe genau diesen Kurzbefehl aus der Projektanweisung für das Video oben aus.`;
+  if (step.zusatz) auftrag += `\n\n${fill(step.zusatz, v)}`;
+  if (felder.length) auftrag += `\n\nZusatzangaben:\n${felder.join("\n")}`;
+  parts.push(auftrag);
+  const prompt = parts.join("\n\n");
+  if (bytes(prompt) > 250000) throw { code: "too_big", message: "Die Anfrage ist zu groß. Schalte in der Wissensbasis für diesen Schritt ein paar Dateien ab oder kürze sie." };
+  return prompt;
+}
+
+/* ---------- Claude calls ---------- */
+const SAMPLE_MSG = {
+  not_granted: "Du hast dem Dashboard nicht erlaubt, Claude zu fragen. Das kannst du im Menü des Artifacts unter Berechtigungen ändern.",
+  sampling_disabled: "Claude-Anfragen sind für dieses Konto nicht verfügbar.",
+  rate_limited: "Dein Claude-Kontingent ist gerade ausgeschöpft oder es laufen zu viele Anfragen. Warte ein paar Minuten und klicke dann noch einmal.",
+  session_expired: "Du bist bei claude.ai abgemeldet worden. Melde dich neu an und lade die Seite.",
+  prompt_too_large: "Die Anfrage ist zu groß. Schalte in der Wissensbasis für diesen Schritt ein paar Dateien ab.",
+  refused: "Claude hat diese Anfrage abgelehnt. Formuliere die Zusatzangaben anders und versuche es erneut.",
+  empty_completion: "Claude hat nichts geliefert. Versuch es noch einmal.",
+  upstream_error: "Die Verbindung zu Claude ist abgebrochen. Was schon da war, ist gespeichert. Klicke noch einmal, wenn du neu starten willst.",
+};
+async function ask(input, step, onText, signal) {
+  const sample = await sampleP;
+  if (!sample) throw { code: "no_sample" };
+  return sample(input, { modelTier: step.tier || "default", cache: false, signal, onText });
+}
+async function runStep(key, mode, extra) {
+  const v = S.videos[S.videoId]; const step = stepByKey(key);
+  if (!v || !step || S.running[key]) return;
+  const vid = S.videoId;
+  await flush(`videos/${vid}`);
+  const prev = draftOr(`${vid}.${key}.text`, res(v, key).text || "");
+  delete S.drafts[`${vid}.${key}.text`];
+  let input;
+  S.status[key] = { msg: "Ich sammle Projektwissen und Ergebnisse …" };
+  S.running[key] = { text: mode === "fortsetzen" ? prev : "", ctl: new AbortController(), vid };
+  render();
+  try {
+    const prompt = await buildPrompt(v, step);
+    if (mode === "nachbessern") {
+      input = [{ role: "user", content: prompt }, { role: "assistant", content: prev }, { role: "user", content: `Überarbeite deine Lieferung nach diesem Feedback von Ines: ${extra}\n\nGib die vollständige überarbeitete Lieferung aus, im selben Format wie vorher. Prüfe wieder die harten Stilregeln und mach danach den Sandra-Check.` }];
+    } else if (mode === "fortsetzen") {
+      input = [{ role: "user", content: prompt }, { role: "assistant", content: prev }, { role: "user", content: "Deine Antwort wurde abgeschnitten. Schreib genau an der Stelle weiter, an der du aufgehört hast, ohne etwas zu wiederholen und ohne Vorbemerkung." }];
+    } else input = prompt;
+  } catch (e) {
+    delete S.running[key];
+    S.status[key] = { err: true, msg: e.message || "Die Anfrage ließ sich nicht vorbereiten." };
+    render(); return;
+  }
+  S.status[key] = { msg: "Claude denkt nach. Bei langen Texten kann das eine bis zwei Minuten dauern.", pulse: true };
+  render();
+  const base = mode === "fortsetzen" ? prev : "";
+  try {
+    const r = await ask(input, step, ({ text }) => {
+      const run = S.running[key]; if (!run) return;
+      run.text = base + text;
+      if (S.status[key] && S.status[key].pulse) { S.status[key] = { msg: "Claude schreibt …" }; updateStatus(key); }
+      const el = document.getElementById(`out-${key}`);
+      if (el && S.videoId === vid) { el.value = run.text; }
+    }, S.running[key].ctl.signal);
+    const text = base + r.text;
+    await saveResult(vid, key, text, r.truncated);
+    S.status[key] = r.truncated ? { err: true, msg: "Die Antwort wurde abgeschnitten. Mit „Weiterschreiben“ holst du den Rest." } : { msg: `Fertig. ${words(text).toLocaleString("de-DE")} Wörter.` };
+    S.open[key] = true;
+  } catch (e) {
+    const code = e && e.code;
+    if (e && e.text) await saveResult(vid, key, base + e.text, true);
+    if (code === "cancelled") S.status[key] = { msg: e.text ? "Gestoppt. Der bisherige Text ist gespeichert." : "Gestoppt." };
+    else if (code === "no_sample") { S.sampleMissing = true; S.status[key] = { err: true, msg: "Claude-Anfragen gehen nur, wenn du das Dashboard auf claude.ai öffnest." }; }
+    else S.status[key] = { err: true, msg: SAMPLE_MSG[code] || SAMPLE_MSG.upstream_error };
+  } finally {
+    delete S.running[key];
+    if (key === "titel" && S.videos[vid]) {
+      const emp = empfehlung(res(S.videos[vid], "titel").text);
+      if (emp && !S.videos[vid].titelGewaehlt) S.status.titel = { msg: `${(S.status.titel || {}).msg || ""} Claude empfiehlt: „${emp}“.` };
+    }
+    render();
+  }
+}
+async function saveResult(vid, key, text, truncated) {
+  if (!S.db) return;
+  const now = new Date().toISOString();
+  try {
+    await flush(`videos/${vid}`);
+    await S.db.doc(`videos/${vid}`).update({ ergebnisse: { [key]: { text, stand: now, abgeschnitten: !!truncated } } });
+  } catch (e) { toast("Das Ergebnis ließ sich nicht speichern. Kopiere es sicherheitshalber."); }
+}
+
+/* ---------- downloads & copy ---------- */
+function xmlEsc(s) { return String(s).replace(/[&<>"]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c])).replace(/[\u0000-\u0008\u000B\u000C\u000E-\u001F]/g, ""); }
+function runsXml(line, base) {
+  const out = []; const parts = line.split(/(\*\*[^*]+\*\*)/g);
+  for (const p of parts) {
+    if (!p) continue;
+    const bold = /^\*\*[^*]+\*\*$/.test(p);
+    const t = bold ? p.slice(2, -2) : p;
+    out.push(`<w:r><w:rPr><w:rFonts w:ascii="Calibri" w:hAnsi="Calibri" w:cs="Calibri"/>${bold || base.b ? "<w:b/>" : ""}${base.i ? "<w:i/>" : ""}<w:sz w:val="${base.sz}"/></w:rPr><w:t xml:space="preserve">${xmlEsc(t)}</w:t></w:r>`);
+  }
+  return out.join("");
+}
+async function makeDocx(text, title) {
+  if (!window.JSZip) throw new Error("zip");
+  const body = [];
+  if (title) body.push(`<w:p><w:pPr><w:spacing w:after="240"/></w:pPr>${runsXml(title, { b: true, sz: 36 })}</w:p>`);
+  for (const raw of String(text).replace(/\r/g, "").split("\n")) {
+    const line = raw.replace(/\s+$/, "");
+    if (!line.trim()) { body.push("<w:p/>"); continue; }
+    let m;
+    if ((m = /^(#{1,3})\s+(.*)$/.exec(line))) { const sz = [0, 32, 28, 24][m[1].length]; body.push(`<w:p><w:pPr><w:spacing w:before="240" w:after="120"/></w:pPr>${runsXml(m[2], { b: true, sz })}</w:p>`); continue; }
+    if ((m = /^\s*[-*]\s+(.*)$/.exec(line))) { body.push(`<w:p><w:pPr><w:ind w:left="360" w:hanging="240"/></w:pPr>${runsXml("• " + m[1], { sz: 22 })}</w:p>`); continue; }
+    if ((m = /^>\s?(.*)$/.exec(line))) { body.push(`<w:p><w:pPr><w:ind w:left="480"/></w:pPr>${runsXml(m[1], { i: true, sz: 22 })}</w:p>`); continue; }
+    body.push(`<w:p><w:pPr><w:spacing w:after="120"/></w:pPr>${runsXml(line, { sz: 22 })}</w:p>`);
+  }
+  const zip = new JSZip();
+  zip.file("[Content_Types].xml", '<?xml version="1.0" encoding="UTF-8" standalone="yes"?><Types xmlns="http://schemas.openxmlformats.org/package/2006/content-types"><Default Extension="rels" ContentType="application/vnd.openxmlformats-package.relationships+xml"/><Default Extension="xml" ContentType="application/xml"/><Override PartName="/word/document.xml" ContentType="application/vnd.openxmlformats-officedocument.wordprocessingml.document.main+xml"/></Types>');
+  zip.file("_rels/.rels", '<?xml version="1.0" encoding="UTF-8" standalone="yes"?><Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships"><Relationship Id="rId1" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/officeDocument" Target="word/document.xml"/></Relationships>');
+  zip.file("word/document.xml", `<?xml version="1.0" encoding="UTF-8" standalone="yes"?><w:document xmlns:w="http://schemas.openxmlformats.org/wordprocessingml/2006/main"><w:body>${body.join("")}<w:sectPr><w:pgSz w:w="11906" w:h="16838"/><w:pgMar w:top="1417" w:right="1417" w:bottom="1134" w:left="1417" w:header="708" w:footer="708" w:gutter="0"/></w:sectPr></w:body></w:document>`);
+  return zip.generateAsync({ type: "blob", mimeType: "application/vnd.openxmlformats-officedocument.wordprocessingml.document" });
+}
+const slug = (s) => String(s || "video").toLowerCase().replace(/ä/g, "ae").replace(/ö/g, "oe").replace(/ü/g, "ue").replace(/ß/g, "ss").replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "").slice(0, 50) || "video";
+async function saveFile(filename, data) {
+  const dl = await dlP;
+  if (!dl) { toast("Herunterladen geht nur, wenn du das Dashboard auf claude.ai öffnest. Nutze solange „Kopieren“."); return; }
+  try { await dl.save({ filename, data }); toast("Datei gespeichert."); }
+  catch (e) { if (e && e.code === "declined") return; toast(e && e.code === "rate_limited" ? "Es ist schon ein Speichern-Dialog offen." : "Die Datei ließ sich hier nicht speichern."); }
+}
+async function copyText(text, label) {
+  try { await navigator.clipboard.writeText(text); toast(`${label || "Text"} kopiert.`); }
+  catch (e) {
+    const ta = document.createElement("textarea"); ta.value = text; ta.style.cssText = "position:fixed;opacity:0"; document.body.appendChild(ta); ta.select();
+    let ok = false; try { ok = document.execCommand("copy"); } catch (x) {}
+    ta.remove(); toast(ok ? `${label || "Text"} kopiert.` : "Kopieren ging nicht. Markiere den Text im Feld und kopiere ihn von Hand.");
+  }
+}
+
+/* ---------- views ---------- */
+function viewTabs() {
+  const ks = Object.entries(S.kanaele).sort((a, b) => (a[1].reihenfolge || 9) - (b[1].reihenfolge || 9));
+  const t = ks.map(([id, k]) => `<button class="tab" data-act="kanal" data-id="${esc(id)}" aria-pressed="${id === S.kanalId && S.view === "videos"}">${esc(k.kurz || k.name)}</button>`);
+  if (kanal()) t.push(`<button class="tab" data-act="wissen" aria-pressed="${S.view === "wissen"}">Wissensbasis${kanal() ? " · " + esc(kanal().kurz || kanal().name) : ""}</button>`);
+  if (S.dbReady && ks.length < 4) t.push(`<button class="tab ghost" data-act="neuKanal">Kanal hinzufügen</button>`);
+  return t.join("");
+}
+function viewBanners() {
+  const b = [];
+  if (S.dbMissing) b.push(`<div class="banner"><strong>Speicher nicht verfügbar.</strong> Das Dashboard speichert deine Videos auf claude.ai. Öffne es dort, angemeldet mit deinem Konto, dann erscheinen deine Daten.</div>`);
+  if (S.sampleMissing) b.push(`<div class="banner"><strong>Claude-Anfragen nicht verfügbar.</strong> Die Buttons für die einzelnen Schritte funktionieren nur, wenn du das Dashboard auf claude.ai öffnest.</div>`);
+  return b.join("");
+}
+function nextSlot() {
+  const k = kanal() || {};
+  const tag = Number.isInteger(k.uploadTag) ? k.uploadTag : 5;
+  const [hh, mm] = String(k.uploadZeit || "16:45").split(":").map(Number);
+  const used = new Set(videosOf(S.kanalId).map(([, v]) => (v.termin || "").slice(0, 10)));
+  const now = new Date();
+  let d = new Date(); d.setHours(hh || 0, mm || 0, 0, 0);
+  let add = (tag - d.getDay() + 7) % 7; if (add === 0 && d <= now) add = 7;
+  d = addDays(d, add);
+  let guard = 0; while (used.has(dayKey(d)) && guard++ < 104) d = addDays(d, 7);
+  return toLocalInput(d);
+}
+function viewQueue() {
+  const k = kanal();
+  const all = videosOf(S.kanalId);
+  const today = new Date(); today.setHours(0, 0, 0, 0);
+  const upcoming = all.filter(([, v]) => { const d = parseLocal(v.termin); return !d || d >= today; });
+  const past = all.filter(([, v]) => { const d = parseLocal(v.termin); return d && d < today; }).reverse();
+  const n = steps().length;
+  const card = ([id, v]) => {
+    const d = parseLocal(v.termin);
+    const done = steps().filter((s) => res(v, s.key).text).length;
+    const segs = steps().map((s) => `<i class="${res(v, s.key).text ? "on" : ""}" title="${esc(s.label)}"></i>`).join("");
+    return `<button class="vcard" data-act="video" data-id="${esc(id)}" aria-current="${id === S.videoId}">
+      <span class="date">${d ? `<span>${esc(d.toLocaleDateString("de-DE", { weekday: "short" }))}</span><b class="tnum">${d.getDate()}</b><span>${esc(d.toLocaleDateString("de-DE", { month: "short" }))}</span>` : "<b>?</b><span>offen</span>"}</span>
+      <span style="min-width:0"><span class="vt">${esc(v.titelGewaehlt || v.thema || "Ohne Thema")}</span>
+      <span class="vmeta tnum">${d ? esc(countdownText(daysUntil(d))) + " · " : ""}${done} von ${n} Schritten</span>
+      <span class="prog">${segs}</span></span></button>`;
+  };
+  return `<aside>
+    <form class="panel newform" id="newVideo" autocomplete="off">
+      <p class="eyebrow">Neues Video · ${esc(k.name)}</p>
+      <label class="f" for="nv-thema">Videothema
+        <input class="in" id="nv-thema" name="thema" placeholder="z. B. Australian Shepherd" required></label>
+      <label class="f" for="nv-termin">Veröffentlichung
+        <input class="in tnum" id="nv-termin" name="termin" type="datetime-local" value="${esc(draftOr("nv.termin", nextSlot()))}"></label>
+      <button class="btn primary" type="submit">Video anlegen</button>
+      <span class="subnote">Vorbelegt ist der nächste freie Upload-Slot (${esc(["Sonntag","Montag","Dienstag","Mittwoch","Donnerstag","Freitag","Samstag"][Number.isInteger(k.uploadTag) ? k.uploadTag : 5])}, ${esc(k.uploadZeit || "16:45")} Uhr).</span>
+    </form>
+    <div class="qhead"><h2>Geplant</h2><span class="tnum">${upcoming.length} ${upcoming.length === 1 ? "Video" : "Videos"}</span></div>
+    <div class="queue">${upcoming.length ? upcoming.map(card).join("") : `<div class="empty">Noch nichts geplant. Trag oben dein nächstes Thema ein, dann erscheint es hier mit allen ${n} Arbeitsschritten.</div>`}</div>
+    ${past.length ? `<details class="past"><summary>Veröffentlicht (${past.length})</summary><div class="queue">${past.map(card).join("")}</div></details>` : ""}
+  </aside>`;
+}
+function fieldHtml(step, f, v) {
+  const id = `f-${step.key}-${f.key}`;
+  const val = draftOr(`${S.videoId}.${step.key}.${f.key}`, (res(v, step.key).felder || {})[f.key] ?? "");
+  const data = `data-sfield="${esc(f.key)}" data-step="${esc(step.key)}"`;
+  if (f.typ === "check") return `<label class="f" for="${id}" style="display:flex;gap:8px;align-items:center;color:var(--ink)"><input type="checkbox" id="${id}" ${data} ${val ? "checked" : ""} style="accent-color:var(--brand)"> ${esc(f.label)}</label>`;
+  const file = f.datei ? `<input type="file" id="${id}-file" accept=".txt,.md,.srt,.vtt,text/plain" data-filefor="${id}" style="font-size:12px;max-width:100%">` : "";
+  if (f.typ === "textarea") return `<label class="f" for="${id}">${esc(f.label)}${f.hilfe ? ` <span style="font-weight:500">· ${esc(f.hilfe)}</span>` : ""}<textarea class="in" id="${id}" ${data} rows="${f.zeilen || 3}">${esc(val)}</textarea>${file}</label>`;
+  return `<label class="f" for="${id}">${esc(f.label)}${f.hilfe ? ` <span style="font-weight:500">· ${esc(f.hilfe)}</span>` : ""}<input class="in" id="${id}" ${data} type="${f.typ === "url" ? "url" : "text"}" value="${esc(val)}"></label>`;
+}
+function viewCheck(key, text, ausgabe) {
+  if (!text) return "";
+  const rules = styleCheck(text, ausgabe);
+  const chips = rules.map((r) => {
+    const n = r.hits.length;
+    return n ? `<button class="chip crit" data-act="finds" data-step="${esc(key)}" data-rule="${r.id}">${esc(r.label)}: ${n}${n >= 50 ? "+" : ""}</button>` : `<span class="chip ok">${esc(r.label)}: 0</span>`;
+  }).join("");
+  const open = S.finds[key];
+  let list = "";
+  if (open) {
+    const r = rules.find((x) => x.id === open);
+    if (r && r.hits.length) list = `<div class="finds">${r.hits.slice(0, 8).map((h) => `<div>…${esc(h.pre)}<mark>${esc(h.hit)}</mark>${esc(h.post)}…</div>`).join("")}${r.hits.length > 8 ? `<div class="subnote">und ${r.hits.length - 8} weitere</div>` : ""}</div>`;
+  }
+  return `<div class="check"><span class="lbl">Stilprüfung</span>${chips}</div>${list}`;
+}
+function viewStep(step, i, v) {
+  const r = res(v, step.key);
+  const run = S.running[step.key] && S.running[step.key].vid === S.videoId ? S.running[step.key] : null;
+  const text = run ? run.text : draftOr(`${S.videoId}.${step.key}.text`, r.text || "");
+  const state = run ? "running" : r.text ? "done" : "todo";
+  const open = S.open[step.key] ?? false;
+  const stand = r.stand ? new Date(r.stand) : null;
+  const pill = run ? `<span class="chip warn pulse">läuft</span>` : r.text ? `<span class="chip ok">${r.abgeschnitten ? "unvollständig" : "fertig"}${stand ? " · " + esc(fmtShort(stand)) : ""}</span>` : `<span class="chip">offen</span>`;
+  let body = "";
+  if (open) {
+    const kon = (step.kontext || []).map((k) => { const s = stepByKey(k); if (!s) return ""; const has = !!res(v, k).text; return `<span class="chip ${has ? "ok" : ""}" title="${has ? "wird mitgeschickt" : "noch leer"}">${esc(s.label)}${has ? "" : " · leer"}</span>`; }).join("");
+    const wi = wissenFor(step.key);
+    const wchips = wi.length ? wi.map((w) => `<span class="chip">${esc(w.titel || "Ohne Titel")}${w.quelle === "drive" ? " · Drive" : ""}</span>`).join("") : `<span class="chip warn">noch keine Wissensdateien</span>`;
+    const st = S.status[step.key];
+    const ausgabe = step.ausgabe || "text";
+    let extraOut = "";
+    if (text && !run) {
+      const btns = [`<button class="btn" data-act="copy" data-step="${esc(step.key)}">Alles kopieren</button>`];
+      if (ausgabe === "docx") btns.push(`<button class="btn dark" data-act="docx" data-step="${esc(step.key)}">Als Word-Datei sichern</button>`);
+      if (ausgabe === "paket") btns.push(`<button class="btn dark" data-act="copyPaket" data-step="${esc(step.key)}">Nur das Paket kopieren</button>`);
+      if (ausgabe === "newsletter") { btns.push(`<button class="btn dark" data-act="copyHtml" data-step="${esc(step.key)}">HTML kopieren</button>`, `<button class="btn" data-act="saveHtml" data-step="${esc(step.key)}">Als HTML-Datei sichern</button>`, `<button class="btn" data-act="preview" data-step="${esc(step.key)}">${S.preview[step.key] ? "Vorschau schließen" : "Vorschau zeigen"}</button>`); }
+      if (ausgabe === "text") btns.push(`<button class="btn" data-act="saveMd" data-step="${esc(step.key)}">Als Textdatei sichern</button>`);
+      if (r.abgeschnitten) btns.push(`<button class="btn primary" data-act="fortsetzen" data-step="${esc(step.key)}">Weiterschreiben</button>`);
+      const facts = [`${words(text).toLocaleString("de-DE")} Wörter`];
+      if (ausgabe === "paket") { const pb = paketBody(text); facts.push(pb ? `Beitragstext ${words(pb).toLocaleString("de-DE")} Wörter, ${pb.length.toLocaleString("de-DE")} Zeichen ${words(pb) >= 1900 ? "(Ziel erreicht)" : "(Ziel 1.900 Wörter)"}` : "kein Codeblock gefunden"); }
+      if (step.key === "titel") { const e = empfehlung(text); if (e) btns.push(`<button class="btn primary" data-act="nimmTitel" data-step="titel">Empfehlung übernehmen</button>`); }
+      const prev = ausgabe === "newsletter" && S.preview[step.key] ? `<iframe class="preview" sandbox="" title="Newsletter-Vorschau" srcdoc="${esc(`<div style="background:#eef0ea;padding:16px">${extractFence(text, "html") || text}</div>`)}"></iframe>` : "";
+      extraOut = `${viewCheck(step.key, text, ausgabe)}
+        <div class="actions">${btns.join("")}<span class="subnote tnum">${esc(facts.join(" · "))}</span></div>${prev}
+        <div class="revise"><input class="in" id="rev-${esc(step.key)}" placeholder="Was soll Claude ändern? z. B. „Titel 4 kürzer, mehr Labrador-Bezug“" value="${esc(draftOr("rev." + step.key, ""))}" data-rev="${esc(step.key)}"><button class="btn" data-act="nachbessern" data-step="${esc(step.key)}">Nachbessern</button></div>`;
+    }
+    body = `<div class="step-body" id="body-${esc(step.key)}">
+      ${step.beschreibung ? `<p class="hint">${esc(fill(step.beschreibung, v))}</p>` : ""}
+      ${(step.kontext || []).length ? `<div class="uses"><span>Baut auf:</span>${kon}</div>` : ""}
+      <div class="uses"><span>Wissen:</span>${wchips}</div>
+      ${(step.felder || []).length ? `<div class="grid2">${step.felder.map((f) => fieldHtml(step, f, v)).join("")}</div>` : ""}
+      <div class="actions">
+        ${run ? `<button class="btn" data-act="stop" data-step="${esc(step.key)}">Stopp</button>` : `<button class="btn primary" data-act="run" data-step="${esc(step.key)}">${esc(step.befehl)}</button>`}
+        ${st ? `<span class="status ${st.err ? "err" : ""} ${st.pulse ? "pulse" : ""}" id="st-${esc(step.key)}">${esc(st.msg)}</span>` : `<span class="status" id="st-${esc(step.key)}">${r.text ? "Ein neuer Klick ersetzt das bisherige Ergebnis." : ""}</span>`}
+      </div>
+      ${text || run ? `<textarea class="out ${ausgabe === "paket" || ausgabe === "newsletter" ? "code" : ""}" id="out-${esc(step.key)}" data-out="${esc(step.key)}" ${run ? "readonly" : ""} rows="14" aria-label="Ergebnis ${esc(step.label)}">${esc(text)}</textarea>` : ""}
+      ${extraOut}
+    </div>`;
+  }
+  return `<section class="step" data-state="${state}" id="step-${esc(step.key)}">
+    <button class="step-head" data-act="toggle" data-step="${esc(step.key)}" aria-expanded="${open}">
+      <span class="step-no">${pad(i + 1)}</span>
+      <span style="min-width:0"><span class="st">${esc(step.label)}</span><span class="cmd">„${esc(step.befehl)}“</span></span>
+      ${pill}
+    </button>${body}</section>`;
+}
+function viewDetail() {
+  const v = S.videos[S.videoId];
+  if (!v || v.kanal !== S.kanalId) return `<section><div class="empty">Wähle links ein Video aus oder lege ein neues an. Hier erscheinen dann alle Schritte von Recherche bis Kommentare, jeder mit eigenem Button.</div></section>`;
+  const d = parseLocal(v.termin);
+  const w = weekdayDates(v.termin);
+  const dv = (k, val) => draftOr(`${S.videoId}.${k}`, val ?? "");
+  const n = daysUntil(d);
+  const armed = S.armed["del:" + S.videoId];
+  return `<section style="min-width:0">
+    <div class="panel vhead">
+      <div class="vhead-top">
+        <span class="countdown">${d ? `<span class="chip ${n !== null && n < 0 ? "" : n <= 3 ? "warn" : "brand"} tnum">${esc(countdownText(n))}</span><span class="tnum">${esc(fmtLong(d))}, ${esc(fmtTime(d))}</span>` : `<span class="chip warn">Termin fehlt</span>`}</span>
+        <button class="btn quiet danger ${armed ? "armed" : ""}" data-act="delVideo">${armed ? "Wirklich löschen?" : "Video löschen"}</button>
+      </div>
+      <label for="v-thema" class="eyebrow" style="margin:0">Videothema</label>
+      <input class="thema-in" id="v-thema" data-vfield="thema" value="${esc(dv("thema", v.thema))}">
+      <div class="grid2">
+        <label class="f" for="v-termin">Veröffentlichung<input class="in tnum" id="v-termin" type="datetime-local" data-vfield="termin" value="${esc(dv("termin", v.termin))}"></label>
+        <label class="f" for="v-titel">Gewählter Titel<input class="in" id="v-titel" data-vfield="titelGewaehlt" placeholder="nach Schritt 2 eintragen" value="${esc(dv("titelGewaehlt", v.titelGewaehlt))}"></label>
+        <label class="f" for="v-sponsor">Sponsor oder Werbung<input class="in" id="v-sponsor" data-vfield="sponsor" placeholder="leer lassen, wenn keine" value="${esc(dv("sponsor", v.sponsor))}"></label>
+      </div>
+      <label class="f" for="v-notizen">Notizen für Claude<textarea class="in" id="v-notizen" data-vfield="notizen" rows="2" placeholder="Blickwinkel, Interviewpartner, persönliche Erlebnisse, Quellen …">${esc(dv("notizen", v.notizen))}</textarea></label>
+      ${w ? `<div class="slots tnum"><span class="chip">Teaser ${esc(fmtShort(w.montag))}</span><span class="chip">Midweek ${esc(fmtShort(w.mittwoch))}</span><span class="chip">Reminder ${esc(fmtShort(w.freitag))}</span></div>` : ""}
+    </div>
+    <div class="steps">${steps().map((s, i) => viewStep(s, i, v)).join("")}</div>
+  </section>`;
+}
+function viewWissen() {
+  const k = kanal();
+  const dv = (f, val) => draftOr(`k.${S.kanalId}.${f}`, val ?? "");
+  const erwartet = Array.isArray(k.erwarteteDateien) ? k.erwarteteDateien : [];
+  const has = (name) => S.wissen.some((w) => (w.titel || "").toLowerCase().includes(String(name).toLowerCase().split(" (")[0]));
+  const items = S.wissen.slice().sort((a, b) => String(a.titel || "").localeCompare(String(b.titel || ""), "de"));
+  const witem = (w) => {
+    const id = w.id;
+    const isDrive = w.quelle === "drive";
+    const sel = Array.isArray(w.schritte) ? w.schritte : [];
+    const armed = S.armed["delw:" + id];
+    const st = S.status["w:" + id];
+    const size = isDrive ? "" : `${(w.text || "").length.toLocaleString("de-DE")} Zeichen`;
+    return `<div class="witem">
+      <div class="witem-top">
+        <input class="in" style="flex:1 1 200px;font-weight:600" id="w-${id}-titel" data-wfield="titel" data-id="${id}" value="${esc(draftOr(`w.${id}.titel`, w.titel))}" placeholder="Name der Datei, z. B. DogsTV Schreibstil Styleguide">
+        <span class="seg"><button data-act="wquelle" data-id="${id}" data-q="text" aria-pressed="${!isDrive}">Text</button><button data-act="wquelle" data-id="${id}" data-q="drive" aria-pressed="${isDrive}">Google Drive</button></span>
+        <label style="display:inline-flex;gap:6px;align-items:center;font-size:12px;font-weight:600"><input type="checkbox" data-act="waus" data-id="${id}" ${w.aus ? "" : "checked"} style="accent-color:var(--brand)"> aktiv</label>
+      </div>
+      ${isDrive ? `<div class="row"><label class="f" for="w-${id}-url">Link zum Google Doc<input class="in" id="w-${id}-url" data-wfield="url" data-id="${id}" value="${esc(draftOr(`w.${id}.url`, w.url))}" placeholder="https://docs.google.com/document/d/…"></label><button class="btn" data-act="wtest" data-id="${id}" style="flex:0 0 auto">Verbindung testen</button></div>
+        ${st ? `<span class="status ${st.err ? "err" : ""}">${esc(st.msg)}</span>` : `<span class="subnote">Das Dashboard liest dieses Dokument bei jedem Klick frisch aus deinem Drive. Änderungen im Doc gelten also sofort.</span>`}`
+      : `<textarea class="in" id="w-${id}-text" data-wfield="text" data-id="${id}" rows="6" placeholder="Inhalt hier einfügen …">${esc(draftOr(`w.${id}.text`, w.text))}</textarea>
+        <div class="row" style="align-items:center"><input type="file" id="w-${id}-file" accept=".txt,.md,.csv,.html,text/plain" data-wfile="${id}" style="font-size:12px;flex:1 1 200px"><span class="subnote tnum" style="flex:0 0 auto">${esc(size)}</span></div>`}
+      <div><p class="eyebrow" style="margin-bottom:6px">Mitschicken bei</p><div class="pick">
+        <label><input type="checkbox" data-act="wall" data-id="${id}" ${sel.length ? "" : "checked"}> allen Schritten</label>
+        ${steps().map((s) => `<label><input type="checkbox" data-act="wstep" data-id="${id}" data-step="${esc(s.key)}" ${sel.includes(s.key) ? "checked" : ""}> ${esc(s.label)}</label>`).join("")}
+      </div></div>
+      <div><button class="btn quiet danger ${armed ? "armed" : ""}" data-act="delWissen" data-id="${id}">${armed ? "Wirklich entfernen?" : "Entfernen"}</button></div>
+    </div>`;
+  };
+  return `<div class="kb">
+    <div><p class="eyebrow">Wissensbasis</p><h1 style="font-size:24px">${esc(k.name)}</h1>
+    <p class="hint" style="margin-top:6px">Alles hier schickt das Dashboard bei einem Klick an Claude. Claude kennt in diesem Dashboard weder deine Projekte noch deine Chat-Erinnerungen, deshalb gehört jedes Wissen, das zählen soll, auf diese Seite.</p></div>
+    <div class="kb-grid">
+      <section class="panel">
+        <h2>Projektanweisung</h2>
+        <textarea class="in ann" id="k-anweisung" data-kfield="anweisung" rows="18">${esc(dv("anweisung", k.anweisung))}</textarea>
+        <div class="grid2">
+          <label class="f" for="k-name">Kanalname<input class="in" id="k-name" data-kfield="name" value="${esc(dv("name", k.name))}"></label>
+          <label class="f" for="k-kurz">Kurzname im Menü<input class="in" id="k-kurz" data-kfield="kurz" value="${esc(dv("kurz", k.kurz))}"></label>
+          <label class="f" for="k-tag">Upload-Tag<select class="in" id="k-tag" data-kfield="uploadTag">${["Sonntag","Montag","Dienstag","Mittwoch","Donnerstag","Freitag","Samstag"].map((n, i) => `<option value="${i}" ${(Number.isInteger(k.uploadTag) ? k.uploadTag : 5) === i ? "selected" : ""}>${n}</option>`).join("")}</select></label>
+          <label class="f" for="k-zeit">Upload-Uhrzeit<input class="in tnum" id="k-zeit" type="time" data-kfield="uploadZeit" value="${esc(dv("uploadZeit", k.uploadZeit || "16:45"))}"></label>
+        </div>
+        <label class="f" for="k-verboten">Verbotene Wörter für die Stilprüfung<textarea class="in" id="k-verboten" data-kfield="verboteneWoerter" rows="3" placeholder="durch Komma getrennt, z. B. Fellnase, Vierbeiner">${esc(dv("verboteneWoerter", k.verboteneWoerter))}</textarea><span style="font-weight:500">Die Liste steht in deinem Styleguide. Trag sie hier ein, dann markiert das Dashboard Treffer automatisch.</span></label>
+      </section>
+      <section class="panel">
+        <h2>Projektwissen</h2>
+        ${erwartet.length ? `<div class="expect"><p class="eyebrow" style="margin:0">Deine Anweisung verweist auf</p>${erwartet.map((n) => `<div>${has(n) ? `<span class="chip ok">da</span>` : `<span class="chip warn">fehlt</span>`} ${esc(n)}</div>`).join("")}</div>` : ""}
+        <div class="actions"><button class="btn primary" data-act="neuWissen" data-q="text">Text einfügen</button><button class="btn" data-act="neuWissen" data-q="drive">Google Doc verknüpfen</button></div>
+        ${items.length ? items.map(witem).join("") : `<div class="empty">Noch keine Wissensdateien. Füge deinen Styleguide, das Beagle-Skript und die Beitragsliste ein, entweder als Text oder als Link zu einem Google Doc.</div>`}
+      </section>
+    </div>
+  </div>`;
+}
+
+/* ---------- render ---------- */
+function autosize(root) {
+  root.querySelectorAll("textarea.out").forEach((t) => { t.style.height = "auto"; t.style.height = Math.min(t.scrollHeight + 4, window.innerHeight * 0.7) + "px"; });
+}
+function render() {
+  document.getElementById("tabs").innerHTML = viewTabs();
+  const app = document.getElementById("app");
+  const a = document.activeElement;
+  const fid = a && a.id && app.contains(a) ? a.id : null;
+  let s0 = null, s1 = null, st = null;
+  if (fid) { try { s0 = a.selectionStart; s1 = a.selectionEnd; } catch (e) {} st = a.scrollTop; }
+  const outScroll = {}; app.querySelectorAll("textarea.out").forEach((t) => { outScroll[t.id] = t.scrollTop; });
+  let html = viewBanners();
+  if (!S.dbReady && !S.dbMissing) html += `<div class="empty">Dein Produktionsplan lädt. Hier erscheinen gleich deine geplanten Videos mit allen Arbeitsschritten.</div>`;
+  else if (!kanal()) html += S.dbMissing ? "" : `<div class="empty">Noch kein Kanal eingerichtet. Klicke oben auf „Kanal hinzufügen“, dann kannst du Anweisung, Wissen und Videos anlegen.</div>`;
+  else if (S.view === "wissen") html += viewWissen();
+  else html += `<div class="bench">${viewQueue()}${viewDetail()}</div>`;
+  app.innerHTML = html;
+  autosize(app);
+  app.querySelectorAll("textarea.out").forEach((t) => { if (outScroll[t.id] != null) t.scrollTop = outScroll[t.id]; });
+  if (fid) { const n = document.getElementById(fid); if (n) { n.focus({ preventScroll: true }); try { if (s0 != null) n.setSelectionRange(s0, s1); } catch (e) {} if (st != null) n.scrollTop = st; } }
+}
+function updateStatus(key) {
+  const el = document.getElementById(`st-${key}`); const st = S.status[key];
+  if (el && st) { el.textContent = st.msg; el.className = `status ${st.err ? "err" : ""} ${st.pulse ? "pulse" : ""}`; }
+}
+let rq = 0;
+function scheduleRender() { cancelAnimationFrame(rq); rq = requestAnimationFrame(render); }
+
+/* ---------- events ---------- */
+document.addEventListener("click", async (ev) => {
+  const b = ev.target.closest("[data-act]"); if (!b) return;
+  const act = b.dataset.act, key = b.dataset.step, id = b.dataset.id;
+  const v = S.videos[S.videoId];
+  switch (act) {
+    case "kanal": S.kanalId = id; S.view = "videos"; try { localStorage.setItem("dp.kanal", id); } catch (e) {} subscribeWissen(); if (S.videos[S.videoId]?.kanal !== id) S.videoId = (videosOf(id)[0] || [])[0] || null; S.open = {}; render(); break;
+    case "wissen": S.view = "wissen"; render(); break;
+    case "video": S.videoId = id; S.open = {}; openFirst(); S.finds = {}; S.preview = {}; render(); if (window.innerWidth <= 900) document.querySelector(".vhead")?.scrollIntoView({ behavior: "smooth", block: "start" }); break;
+    case "toggle": S.open[key] = !(S.open[key] ?? false); render(); break;
+    case "run": runStep(key); break;
+    case "stop": S.running[key]?.ctl.abort(); break;
+    case "fortsetzen": runStep(key, "fortsetzen"); break;
+    case "nachbessern": {
+      const fb = draftOr("rev." + key, "").trim();
+      if (!fb) { toast("Schreib zuerst ins Feld, was Claude ändern soll."); document.getElementById("rev-" + key)?.focus(); break; }
+      setDraft("rev." + key, ""); runStep(key, "nachbessern", fb); break;
+    }
+    case "copy": copyText(currentText(key), "Ergebnis"); break;
+    case "copyPaket": { const p = extractFence(currentText(key)); p ? copyText(p, "Paket") : toast("Im Ergebnis steht kein Codeblock. Lass Claude nachbessern."); break; }
+    case "copyHtml": { const p = extractFence(currentText(key), "html"); p ? copyText(p, "HTML") : toast("Im Ergebnis steht kein HTML-Codeblock. Lass Claude nachbessern."); break; }
+    case "saveHtml": { const p = extractFence(currentText(key), "html"); p ? saveFile(`newsletter-${slug(v?.thema)}.html`, p) : toast("Im Ergebnis steht kein HTML-Codeblock."); break; }
+    case "saveMd": saveFile(`${slug(v?.thema)}-${key}.md`, currentText(key)); break;
+    case "docx": {
+      try { const blob = await makeDocx(currentText(key), v?.titelGewaehlt || v?.thema); saveFile(`skript-${slug(v?.thema)}.docx`, blob); }
+      catch (e) { toast("Die Word-Datei ließ sich nicht erzeugen. Kopiere den Text und füge ihn in Word ein."); }
+      break;
+    }
+    case "preview": S.preview[key] = !S.preview[key]; render(); break;
+    case "finds": S.finds[key] = S.finds[key] === b.dataset.rule ? null : b.dataset.rule; render(); break;
+    case "nimmTitel": { const e = empfehlung(currentText("titel")); if (e) { setDraft(`${S.videoId}.titelGewaehlt`, e); queueWrite(`videos/${S.videoId}`, { titelGewaehlt: e }, 0); toast("Titel übernommen."); render(); } break; }
+    case "delVideo": {
+      const k = "del:" + S.videoId;
+      if (!S.armed[k]) { S.armed[k] = true; render(); setTimeout(() => { delete S.armed[k]; render(); }, 4000); break; }
+      const vid = S.videoId; S.videoId = null; delete S.armed[k];
+      try { await S.db.doc(`videos/${vid}`).delete(); toast("Video gelöscht."); } catch (e) { toast("Löschen hat nicht geklappt."); }
+      break;
+    }
+    case "neuKanal": await neuerKanal(); break;
+    case "neuWissen": {
+      if (!S.db) break;
+      const nid = uid();
+      try { await S.db.doc(`kanaele/${S.kanalId}/wissen/${nid}`).set({ titel: "", quelle: b.dataset.q, text: "", url: "", fileId: "", schritte: [], aus: false, erstellt: new Date().toISOString() }); setTimeout(() => document.getElementById(`w-${nid}-titel`)?.focus(), 300); }
+      catch (e) { toast(e && e.code === "quota_exceeded" ? "Der Speicher ist voll. Entferne alte Einträge." : "Anlegen hat nicht geklappt."); }
+      break;
+    }
+    case "wquelle": queueWrite(`kanaele/${S.kanalId}/wissen/${id}`, { quelle: b.dataset.q }, 0); break;
+    case "waus": queueWrite(`kanaele/${S.kanalId}/wissen/${id}`, { aus: !b.checked }, 0); break;
+    case "wall": if (b.checked) queueWrite(`kanaele/${S.kanalId}/wissen/${id}`, { schritte: [] }, 0); else b.checked = true; break;
+    case "wstep": {
+      const w = S.wissen.find((x) => x.id === id); if (!w) break;
+      const sel = new Set(Array.isArray(w.schritte) ? w.schritte : []);
+      b.checked ? sel.add(key) : sel.delete(key);
+      queueWrite(`kanaele/${S.kanalId}/wissen/${id}`, { schritte: [...sel] }, 0); break;
+    }
+    case "wtest": {
+      const w = S.wissen.find((x) => x.id === id);
+      const url = draftOr(`w.${id}.url`, w?.url);
+      const fileId = driveId(url);
+      if (!fileId) { S.status["w:" + id] = { err: true, msg: "Das sieht nicht nach einem Google-Drive-Link aus. Kopiere den Link aus der Adresszeile des Dokuments." }; render(); break; }
+      S.status["w:" + id] = { msg: "Ich lese das Dokument …" }; render();
+      try {
+        const r = await readDrive(fileId, true);
+        S.status["w:" + id] = { msg: `Verbunden${r.title ? ": „" + r.title + "“" : ""}, ${r.text.length.toLocaleString("de-DE")} Zeichen.` };
+        if (r.title && !draftOr(`w.${id}.titel`, w?.titel)) { setDraft(`w.${id}.titel`, r.title); queueWrite(`kanaele/${S.kanalId}/wissen/${id}`, { titel: r.title }, 0); }
+      } catch (e) { S.status["w:" + id] = { err: true, msg: MCP_MSG[e.code] || "Das Dokument ließ sich nicht lesen." }; }
+      render(); break;
+    }
+    case "delWissen": {
+      const k = "delw:" + id;
+      if (!S.armed[k]) { S.armed[k] = true; render(); setTimeout(() => { delete S.armed[k]; render(); }, 4000); break; }
+      delete S.armed[k];
+      try { await S.db.doc(`kanaele/${S.kanalId}/wissen/${id}`).delete(); } catch (e) { toast("Entfernen hat nicht geklappt."); }
+      break;
+    }
+  }
+});
+function currentText(key) {
+  const el = document.getElementById(`out-${key}`);
+  return el ? el.value : res(S.videos[S.videoId], key).text || "";
+}
+function openFirst() {
+  const v = S.videos[S.videoId]; if (!v) return;
+  const s = steps().find((x) => !res(v, x.key).text);
+  if (s) S.open[s.key] = true;
+}
+document.addEventListener("input", (ev) => {
+  const t = ev.target;
+  if (t.id === "nv-termin") { setDraft("nv.termin", t.value); return; }
+  if (t.dataset.vfield) { const f = t.dataset.vfield; setDraft(`${S.videoId}.${f}`, t.value); queueWrite(`videos/${S.videoId}`, { [f]: t.value }); return; }
+  if (t.dataset.sfield) { const val = t.type === "checkbox" ? t.checked : t.value; setDraft(`${S.videoId}.${t.dataset.step}.${t.dataset.sfield}`, val); queueWrite(`videos/${S.videoId}`, { ergebnisse: { [t.dataset.step]: { felder: { [t.dataset.sfield]: val } } } }); return; }
+  if (t.dataset.out && !t.readOnly) { setDraft(`${S.videoId}.${t.dataset.out}.text`, t.value); queueWrite(`videos/${S.videoId}`, { ergebnisse: { [t.dataset.out]: { text: t.value } } }, 1200); return; }
+  if (t.dataset.rev) { setDraft("rev." + t.dataset.rev, t.value); return; }
+  if (t.dataset.kfield) {
+    const f = t.dataset.kfield; let val = t.value;
+    if (f === "uploadTag") val = Number(val);
+    setDraft(`k.${S.kanalId}.${f}`, val); queueWrite(`kanaele/${S.kanalId}`, { [f]: val }, f === "anweisung" ? 1200 : 700);
+    if (f === "uploadTag") scheduleRender();
+    return;
+  }
+  if (t.dataset.wfield) {
+    const f = t.dataset.wfield, id = t.dataset.id;
+    setDraft(`w.${id}.${f}`, t.value);
+    const patch = { [f]: t.value };
+    if (f === "url") patch.fileId = driveId(t.value) || "";
+    queueWrite(`kanaele/${S.kanalId}/wissen/${id}`, patch, 900);
+  }
+});
+document.addEventListener("change", (ev) => {
+  const t = ev.target;
+  if (t.dataset.sfield && t.type === "checkbox") return; // handled by input
+  if (t.dataset.kfield === "uploadTag") return;
+  const file = t.files && t.files[0];
+  if (!file) return;
+  const rd = new FileReader();
+  rd.onload = () => {
+    const text = String(rd.result || "");
+    if (t.dataset.wfile) {
+      const id = t.dataset.wfile; const w = S.wissen.find((x) => x.id === id);
+      setDraft(`w.${id}.text`, text);
+      const patch = { text };
+      if (w && !draftOr(`w.${id}.titel`, w.titel)) { const nm = file.name.replace(/\.[^.]+$/, ""); patch.titel = nm; setDraft(`w.${id}.titel`, nm); }
+      queueWrite(`kanaele/${S.kanalId}/wissen/${id}`, patch, 0);
+      render();
+    } else if (t.dataset.filefor) {
+      const target = document.getElementById(t.dataset.filefor);
+      if (target) { target.value = text; target.dispatchEvent(new Event("input", { bubbles: true })); }
+    }
+  };
+  if (file.size > 220000) { toast("Die Datei ist sehr groß. Kürze sie lieber auf das Wesentliche."); }
+  rd.readAsText(file);
+});
+document.addEventListener("submit", async (ev) => {
+  if (ev.target.id !== "newVideo") return;
+  ev.preventDefault();
+  if (!S.db) { toast("Speichern geht nur auf claude.ai."); return; }
+  const fd = new FormData(ev.target);
+  const thema = String(fd.get("thema") || "").trim();
+  if (!thema) return;
+  const nid = uid();
+  try {
+    await S.db.doc(`videos/${nid}`).set({ kanal: S.kanalId, thema, termin: String(fd.get("termin") || ""), titelGewaehlt: "", sponsor: "", notizen: "", ergebnisse: {}, erstellt: new Date().toISOString() });
+    delete S.drafts["nv.termin"];
+    S.videoId = nid; S.open = {}; S.open[(steps()[0] || {}).key] = true;
+    toast("Video angelegt.");
+  } catch (e) { toast(e && e.code === "quota_exceeded" ? "Der Speicher ist voll. Lösche alte Videos." : "Anlegen hat nicht geklappt."); }
+});
+async function neuerKanal() {
+  if (!S.db) return;
+  const vorlage = kanal() || Object.values(S.kanaele)[0];
+  const nid = "kanal-" + uid();
+  await S.db.doc(`kanaele/${nid}`).set({
+    name: "Neuer Kanal", kurz: "Neuer Kanal", reihenfolge: Object.keys(S.kanaele).length + 1,
+    uploadTag: 5, uploadZeit: "16:45", anweisung: "", verboteneWoerter: "", erwarteteDateien: [],
+    schritte: vorlage && Array.isArray(vorlage.schritte) ? vorlage.schritte : [],
+  });
+  S.kanalId = nid; S.view = "wissen"; subscribeWissen(); render();
+  toast("Kanal angelegt. Trag Namen und Anweisung ein.");
+}
+
+/* ---------- data wiring ---------- */
+function subscribeWissen() {
+  if (S.unsubWissen) { S.unsubWissen(); S.unsubWissen = null; }
+  S.wissen = [];
+  if (!S.db || !S.kanalId || !S.kanaele[S.kanalId]) return;
+  S.unsubWissen = S.db.collection(`kanaele/${S.kanalId}/wissen`).onSnapshot((snap) => {
+    S.wissen = snap.docs.map((d) => ({ id: d.id, ...d.data() }));
+    scheduleRender();
+  }, () => {});
+}
+(async () => {
+  const db = await dbP;
+  if (!db) { S.dbMissing = true; render(); return; }
+  S.db = db;
+  let first = true;
+  db.collection("kanaele").onSnapshot((snap) => {
+    const k = {}; snap.docs.forEach((d) => { k[d.id] = d.data(); });
+    S.kanaele = k; S.dbReady = true;
+    if (!S.kanalId || !k[S.kanalId]) {
+      const ids = Object.entries(k).sort((a, b) => (a[1].reihenfolge || 9) - (b[1].reihenfolge || 9)).map((x) => x[0]);
+      S.kanalId = ids[0] || null; first = true;
+    }
+    if (first) { first = false; subscribeWissen(); }
+    scheduleRender();
+  }, () => { S.dbMissing = true; scheduleRender(); });
+  db.collection("videos").onSnapshot((snap) => {
+    const v = {}; snap.docs.forEach((d) => { v[d.id] = d.data(); });
+    S.videos = v;
+    if (!S.videoId || !v[S.videoId]) {
+      const today = dayKey(new Date());
+      const list = videosOf(S.kanalId);
+      const next = list.find(([, x]) => (x.termin || "9999") >= today) || list[list.length - 1];
+      const fresh = !S.videoId;
+      S.videoId = next ? next[0] : null;
+      if (fresh || S.videoId) { S.open = {}; openFirst(); }
+    }
+    scheduleRender();
+  }, () => {});
+})();
+sampleP.then((s) => { if (!s) { S.sampleMissing = true; scheduleRender(); } });
+render();
+})();
+</script>
