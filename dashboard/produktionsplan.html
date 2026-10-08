@@ -203,11 +203,14 @@ const sampleP = C ? C.use("sample").catch(() => null) : Promise.resolve(null);
 const mcpP = C ? C.use("mcp").catch(() => null) : Promise.resolve(null);
 const dlP = C ? C.use("downloads").catch(() => null) : Promise.resolve(null);
 const DRIVE = "Google Drive";
+const CCR = "Claude Code Remote";
+const ARTIFACT_URL = "https://claude.ai/artifact/VL2rPsEtToGNcjqJw11yAR";
+const CLOUD_ENV = "env_01Y6N63LT7hrTUGCfbHBywwx";
 
 /* ---------- state ---------- */
 const S = {
   db: null, dbReady: false, dbMissing: false, sampleMissing: false,
-  kanaele: {}, wissen: [], videos: {},
+  kanaele: {}, wissen: [], videos: {}, cloud: {}, ingested: {},
   kanalId: null, view: "videos", videoId: null,
   open: {}, running: {}, status: {}, finds: {}, preview: {}, drafts: {}, armed: {},
   unsubWissen: null,
@@ -365,10 +368,12 @@ function fill(tpl, v) {
 function wissenFor(stepKey) {
   return S.wissen.filter((w) => !w.aus && (!Array.isArray(w.schritte) || !w.schritte.length || w.schritte.includes(stepKey)));
 }
-async function buildPrompt(v, step) {
+async function buildPrompt(v, step, opts = {}) {
   const k = kanal();
   const parts = [];
-  parts.push(`Du arbeitest als Produktionsassistenz für den YouTube-Kanal ${k.name}. Diese Anfrage kommt aus Ines' Produktions-Dashboard. Du hast kein Gedächtnis aus früheren Chats, alles Nötige steht in dieser Nachricht. In diesem Dashboard kannst du keine Rückfragen stellen, nicht im Internet suchen und keine Dateien anlegen. Liefere den Inhalt deshalb direkt als Text. Fehlt dir eine Angabe, setze an der Stelle einen klar erkennbaren Platzhalter in eckigen Klammern und nenne die Lücke ganz am Ende unter der Überschrift „Hinweise für Ines“.`);
+  const material = [];
+  if (opts.cloud) parts.push(`Du arbeitest als Produktionsassistenz für den YouTube-Kanal ${k.name}. Dieser Auftrag kommt aus Ines' Produktions-Dashboard. Du hast kein Gedächtnis aus früheren Chats. Du kannst keine Rückfragen stellen, aber du hast Websuche: Nutze sie gründlich, besonders für aktuelle Studien, und nenne zu jeder Zahl und jeder Studie die URL. Wo die Projektanweisung von Projektdateien spricht, findest du sie im Referenzmaterial. Fehlt dir eine Angabe, setze einen klar erkennbaren Platzhalter in eckigen Klammern und nenne die Lücke ganz am Ende unter der Überschrift „Hinweise für Ines“.`);
+  else parts.push(`Du arbeitest als Produktionsassistenz für den YouTube-Kanal ${k.name}. Diese Anfrage kommt aus Ines' Produktions-Dashboard. Du hast kein Gedächtnis aus früheren Chats, alles Nötige steht in dieser Nachricht. In diesem Dashboard kannst du keine Rückfragen stellen, nicht im Internet suchen und keine Dateien anlegen. Liefere den Inhalt deshalb direkt als Text. Fehlt dir eine Angabe, setze an der Stelle einen klar erkennbaren Platzhalter in eckigen Klammern und nenne die Lücke ganz am Ende unter der Überschrift „Hinweise für Ines“.`);
   parts.push(`<projektanweisung>\n${k.anweisung || ""}\n</projektanweisung>`);
   const items = wissenFor(step.key);
   if (items.length) {
@@ -382,7 +387,7 @@ async function buildPrompt(v, step) {
       }
       docs.push(`<datei name="${(w.titel || "Ohne Titel").replace(/"/g, "'")}">\n${text}\n</datei>`);
     }
-    parts.push(`<projektwissen>\n${docs.join("\n")}\n</projektwissen>`);
+    (opts.cloud ? material : parts).push(`<projektwissen>\n${docs.join("\n")}\n</projektwissen>`);
   }
   const d = parseLocal(v.termin);
   const vid = [
@@ -394,7 +399,7 @@ async function buildPrompt(v, step) {
   if (v.notizen) vid.push(`Notizen von Ines:\n${v.notizen}`);
   parts.push(`<video>\n${vid.join("\n")}\n</video>`);
   const kon = (step.kontext || []).map((key) => [stepByKey(key), res(v, key).text]).filter(([s, t]) => s && t);
-  if (kon.length) parts.push(`<bisherige_ergebnisse>\n${kon.map(([s, t]) => `<ergebnis schritt="${s.label}">\n${t}\n</ergebnis>`).join("\n")}\n</bisherige_ergebnisse>`);
+  if (kon.length) (opts.cloud ? material : parts).push(`<bisherige_ergebnisse>\n${kon.map(([s, t]) => `<ergebnis schritt="${s.label}">\n${t}\n</ergebnis>`).join("\n")}\n</bisherige_ergebnisse>`);
   const felder = (step.felder || []).map((f) => {
     const val = draftOr(`${S.videoId}.${step.key}.${f.key}`, (res(v, step.key).felder || {})[f.key]);
     if (f.typ === "check") return `- ${f.label}: ${val ? "ja" : "nein"}`;
@@ -405,6 +410,12 @@ async function buildPrompt(v, step) {
   if (felder.length) auftrag += `\n\nZusatzangaben:\n${felder.join("\n")}`;
   parts.push(auftrag);
   const prompt = parts.join("\n\n");
+  if (opts.cloud) {
+    const mat = material.join("\n\n");
+    if (bytes(prompt) > 60000) throw { code: "too_big", message: "Die Projektanweisung ist für einen Cloud-Auftrag zu lang. Kürze sie etwas." };
+    if (bytes(mat) > 240000) throw { code: "too_big", message: "Das Projektwissen für diesen Schritt ist zu groß. Schalte ein paar Dateien für die Recherche ab." };
+    return { prompt, material: mat };
+  }
   if (bytes(prompt) > 250000) throw { code: "too_big", message: "Die Anfrage ist zu groß. Schalte in der Wissensbasis für diesen Schritt ein paar Dateien ab oder kürze sie." };
   return prompt;
 }
@@ -476,6 +487,84 @@ async function runStep(key, mode, extra) {
       if (emp && !S.videos[vid].titelGewaehlt) S.status.titel = { msg: `${(S.status.titel || {}).msg || ""} Claude empfiehlt: „${emp}“.` };
     }
     render();
+  }
+}
+const CCR_MSG = {
+  server_not_connected: "Die Verbindung „Claude Code Remote“ fehlt in diesem Konto. Öffne das Dashboard angemeldet auf claude.ai.",
+  not_in_manifest: "Du hast dem Dashboard nicht erlaubt, Cloud-Sitzungen zu starten. Das kannst du im Menü des Artifacts unter Berechtigungen ändern.",
+  needs_reauth: "Die Verbindung zu Claude Code ist abgelaufen. Lade claude.ai neu und melde dich an.",
+  server_unavailable: "Claude Code antwortet gerade nicht. Versuch es in einer Minute noch einmal.",
+  no_mcp: "Cloud-Aufträge gehen nur, wenn du das Dashboard auf claude.ai öffnest.",
+};
+async function runCloud(key) {
+  const v = S.videos[S.videoId]; const step = stepByKey(key);
+  if (!v || !step || S.running[key]) return;
+  const vid = S.videoId;
+  S.running[key] = { text: "", cloud: true, vid };
+  S.status[key] = { msg: "Ich bereite den Online-Auftrag vor …" };
+  render();
+  try {
+    await flush(`videos/${vid}`);
+    const mcp = await mcpP;
+    if (!mcp) throw { code: "no_mcp" };
+    const { prompt, material } = await buildPrompt(v, step, { cloud: true });
+    const jobId = "job-" + uid();
+    await S.db.doc(`auftraege/${jobId}`).set({ video: vid, schritt: key, material, erstellt: new Date().toISOString() });
+    const auftrag = `Automatischer Auftrag aus Ines' DogsTV-Produktionsdashboard (Artifact ${ARTIFACT_URL}). Niemand schaut zu: Arbeite ohne Rückfragen bis zum Ende.
+
+1. Lade das Tool ArtifactData (ToolSearch mit "select:ArtifactData"). Lies mit action "get", collection "auftraege", doc_id "${jobId}" das Feld "material". Es enthält Ines' Projektwissen und die bisherigen Ergebnisse zu diesem Video als Referenzmaterial.
+2. Erledige den Auftrag unter AUFTRAG. Recherchiere dafür gründlich online mit WebSearch und WebFetch, bevorzugt in Fachzeitschriften, bei Universitäten, Tierärztlichen Hochschulen und Zuchtverbänden. Prüfe bei jeder Studie Erscheinungsjahr und Peer Review und nenne die URL.
+3. Schreibe die vollständige Lieferung mit ArtifactData: action "set", collection "cloud", doc_id "${jobId}", data {"status": "fertig", "video": "${vid}", "schritt": "${key}", "text": "<die komplette Lieferung als Markdown>"}. Scheitert etwas, schreibe stattdessen {"status": "fehler", "video": "${vid}", "schritt": "${key}", "text": "<was genau scheiterte>"}.
+
+Ändere sonst nichts in der Datenbank und lege keine Dateien, Commits oder Pull Requests an.
+
+=== AUFTRAG ===
+${prompt}`;
+    if (bytes(auftrag) > 62000) throw { code: "too_big", message: "Der Auftrag ist zu lang für eine Cloud-Sitzung. Kürze die Projektanweisung etwas." };
+    const input = { environment_id: (kanal() && kanal().cloudUmgebung) || CLOUD_ENV, title: `DogsTV ${step.label}: ${v.thema || "Video"}`.slice(0, 200), prompt: auftrag };
+    const r = await mcp.callTool(CCR, "create_session", input);
+    const m = /session_[A-Za-z0-9]+/.exec(JSON.stringify(r.payload ?? r.content ?? ""));
+    const sessionId = m ? m[0] : "";
+    await S.db.doc(`videos/${vid}`).update({ ergebnisse: { [key]: { cloud: { jobId, sessionId, status: "laeuft", start: new Date().toISOString() } } } });
+    S.status[key] = { msg: "Claude recherchiert jetzt online. Das dauert meist zwei bis zehn Minuten, und du kannst das Dashboard so lange schließen." };
+  } catch (e) {
+    S.status[key] = { err: true, msg: CCR_MSG[e && e.code] || (e && e.code === "too_big" || e && e.code === "drive" || e && e.code === "drive_link" ? e.message : "Der Online-Auftrag ließ sich nicht starten." + (e && e.message ? " (" + e.message + ")" : "")) };
+  } finally {
+    delete S.running[key];
+    render();
+  }
+}
+async function checkCloud(key) {
+  const c = res(S.videos[S.videoId], key).cloud || {};
+  const mcp = await mcpP;
+  if (!mcp || !c.sessionId) { S.status[key] = { err: true, msg: CCR_MSG.no_mcp }; render(); return; }
+  S.status[key] = { msg: "Ich frage den Stand ab …" }; render();
+  try {
+    const r = await mcp.callTool(CCR, "get_session", { session_id: c.sessionId }, { cache: false });
+    const t = JSON.stringify(r.payload ?? "");
+    let msg = "Die Sitzung arbeitet noch.";
+    if (/BUCKET_FAILED|"failed"/i.test(t)) msg = "Die Sitzung ist mit einem Fehler abgebrochen. Öffne sie, um nachzusehen, oder starte die Recherche neu.";
+    else if (/BUCKET_BLOCKED|"blocked"/i.test(t)) msg = "Die Sitzung wartet auf eine Freigabe von dir. Öffne sie und klicke auf „Erlauben“.";
+    else if (/BUCKET_COMPLETED|BUCKET_REVIEW_READY|"completed"|"review_ready"/i.test(t)) msg = "Die Sitzung ist fertig, hat aber kein Ergebnis geschrieben. Öffne sie, um die Antwort zu sehen, oder starte neu.";
+    S.status[key] = { msg, err: !/arbeitet noch/.test(msg) };
+  } catch (e) { S.status[key] = { err: true, msg: CCR_MSG[e.code] || "Der Stand ließ sich nicht abfragen." }; }
+  render();
+}
+async function ingestCloud() {
+  if (!S.db) return;
+  for (const [jobId, d] of Object.entries(S.cloud)) {
+    if (S.ingested[jobId] || !d || !d.video || !d.schritt) continue;
+    const v = S.videos[d.video]; if (!v) continue;
+    const c = res(v, d.schritt).cloud;
+    if (!c || c.jobId !== jobId || c.status !== "laeuft") continue;
+    S.ingested[jobId] = true;
+    const ok = d.status === "fertig" && d.text;
+    const patch = { ergebnisse: { [d.schritt]: { cloud: { status: ok ? "fertig" : "fehler" } } } };
+    if (ok) Object.assign(patch.ergebnisse[d.schritt], { text: String(d.text), stand: new Date().toISOString(), abgeschnitten: false });
+    else S.status[d.schritt] = { err: true, msg: "Die Online-Recherche ist gescheitert: " + String(d.text || "ohne Begründung") };
+    delete S.drafts[`${d.video}.${d.schritt}.text`];
+    try { await flush(`videos/${d.video}`); await S.db.doc(`videos/${d.video}`).update(patch); if (ok) { S.status[d.schritt] = { msg: `Online-Recherche ist da. ${words(d.text).toLocaleString("de-DE")} Wörter.` }; S.open[d.schritt] = true; } }
+    catch (e) { delete S.ingested[jobId]; }
   }
 }
 async function saveResult(vid, key, text, truncated) {
@@ -620,10 +709,11 @@ function viewStep(step, i, v) {
   const r = res(v, step.key);
   const run = S.running[step.key] && S.running[step.key].vid === S.videoId ? S.running[step.key] : null;
   const text = run ? run.text : draftOr(`${S.videoId}.${step.key}.text`, r.text || "");
-  const state = run ? "running" : r.text ? "done" : "todo";
+  const cl = step.modus === "cloud" && r.cloud && r.cloud.status === "laeuft" ? r.cloud : null;
+  const state = run || cl ? "running" : r.text ? "done" : "todo";
   const open = S.open[step.key] ?? false;
   const stand = r.stand ? new Date(r.stand) : null;
-  const pill = run ? `<span class="chip warn pulse">läuft</span>` : r.text ? `<span class="chip ok">${r.abgeschnitten ? "unvollständig" : "fertig"}${stand ? " · " + esc(fmtShort(stand)) : ""}</span>` : `<span class="chip">offen</span>`;
+  const pill = cl ? `<span class="chip warn pulse">online · läuft</span>` : run ? `<span class="chip warn pulse">läuft</span>` : r.text ? `<span class="chip ok">${r.abgeschnitten ? "unvollständig" : "fertig"}${stand ? " · " + esc(fmtShort(stand)) : ""}</span>` : `<span class="chip">offen</span>`;
   let body = "";
   if (open) {
     const kon = (step.kontext || []).map((k) => { const s = stepByKey(k); if (!s) return ""; const has = !!res(v, k).text; return `<span class="chip ${has ? "ok" : ""}" title="${has ? "wird mitgeschickt" : "noch leer"}">${esc(s.label)}${has ? "" : " · leer"}</span>`; }).join("");
@@ -653,8 +743,8 @@ function viewStep(step, i, v) {
       <div class="uses"><span>Wissen:</span>${wchips}</div>
       ${(step.felder || []).length ? `<div class="grid2">${step.felder.map((f) => fieldHtml(step, f, v)).join("")}</div>` : ""}
       <div class="actions">
-        ${run ? `<button class="btn" data-act="stop" data-step="${esc(step.key)}">Stopp</button>` : `<button class="btn primary" data-act="run" data-step="${esc(step.key)}">${esc(step.befehl)}</button>`}
-        ${st ? `<span class="status ${st.err ? "err" : ""} ${st.pulse ? "pulse" : ""}" id="st-${esc(step.key)}">${esc(st.msg)}</span>` : `<span class="status" id="st-${esc(step.key)}">${r.text ? "Ein neuer Klick ersetzt das bisherige Ergebnis." : ""}</span>`}
+        ${run && !run.cloud ? `<button class="btn" data-act="stop" data-step="${esc(step.key)}">Stopp</button>` : step.modus === "cloud" ? (cl ? `<button class="btn" data-act="checkCloud" data-step="${esc(step.key)}">Stand prüfen</button>${cl.sessionId ? `<a class="btn quiet" href="https://claude.ai/code/${esc(cl.sessionId)}" target="_blank" rel="noopener">Sitzung ansehen</a>` : ""}<button class="btn quiet" data-act="runCloud" data-step="${esc(step.key)}">Neu starten</button>` : `<button class="btn primary" data-act="runCloud" data-step="${esc(step.key)}" ${run ? "disabled" : ""}>${esc(step.befehl)} · online</button>`) : `<button class="btn primary" data-act="run" data-step="${esc(step.key)}">${esc(step.befehl)}</button>`}
+        ${st ? `<span class="status ${st.err ? "err" : ""} ${st.pulse ? "pulse" : ""}" id="st-${esc(step.key)}">${esc(st.msg)}</span>` : `<span class="status" id="st-${esc(step.key)}">${cl ? `Läuft in der Cloud seit ${esc(fmtTime(new Date(cl.start)))}. Das Ergebnis erscheint hier von selbst.` : r.text ? "Ein neuer Klick ersetzt das bisherige Ergebnis." : ""}</span>`}
       </div>
       ${text || run ? `<textarea class="out ${ausgabe === "paket" || ausgabe === "newsletter" ? "code" : ""}" id="out-${esc(step.key)}" data-out="${esc(step.key)}" ${run ? "readonly" : ""} rows="14" aria-label="Ergebnis ${esc(step.label)}">${esc(text)}</textarea>` : ""}
       ${extraOut}
@@ -789,6 +879,8 @@ document.addEventListener("click", async (ev) => {
     case "video": S.videoId = id; S.open = {}; openFirst(); S.finds = {}; S.preview = {}; render(); if (window.innerWidth <= 900) document.querySelector(".vhead")?.scrollIntoView({ behavior: "smooth", block: "start" }); break;
     case "toggle": S.open[key] = !(S.open[key] ?? false); render(); break;
     case "run": runStep(key); break;
+    case "runCloud": runCloud(key); break;
+    case "checkCloud": checkCloud(key); break;
     case "stop": S.running[key]?.ctl.abort(); break;
     case "fortsetzen": runStep(key, "fortsetzen"); break;
     case "nachbessern": {
@@ -963,9 +1055,13 @@ function subscribeWissen() {
     if (first) { first = false; subscribeWissen(); }
     scheduleRender();
   }, () => { S.dbMissing = true; scheduleRender(); });
+  db.collection("cloud").onSnapshot((snap) => {
+    const c = {}; snap.docs.forEach((d) => { c[d.id] = d.data(); });
+    S.cloud = c; ingestCloud();
+  }, () => {});
   db.collection("videos").onSnapshot((snap) => {
     const v = {}; snap.docs.forEach((d) => { v[d.id] = d.data(); });
-    S.videos = v;
+    S.videos = v; ingestCloud();
     if (!S.videoId || !v[S.videoId]) {
       const today = dayKey(new Date());
       const list = videosOf(S.kanalId);
